@@ -105,6 +105,23 @@ If your agent can also *execute* — Robinhood's agentic accounts, or Alpaca —
 [pairing recipe](https://coil.trade/agents/robinhood) documents the read order and a prompt
 that encodes it.
 
+## Run it on Apify (no install)
+
+This repo doubles as an [Apify](https://apify.com) Actor — `.actor/` carries the input schema,
+a dataset view and a dependency-free Dockerfile. It publishes the board as dataset rows: one
+`regime` row per book (read it first) and one `name` row per scored name, with an optional
+`record` row carrying the publisher's own return versus SPY and QQQ.
+
+Inputs: `book` (all / spx / qqq / macro / crypto), `includeRegime`, `includeRecord`, and an
+optional Coil Scanner `licenseKey` for the live intraday board instead of the free delayed one.
+
+The same entry point runs locally with no Apify at all — it prints the rows instead of pushing
+them:
+
+```bash
+python3 -m actor_main
+```
+
 ## Disclaimer
 
 Research software, published for study. **Not investment advice**, not a recommendation to

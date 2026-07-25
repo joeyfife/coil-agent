@@ -1,0 +1,33 @@
+{
+  "actorSpecification": 1,
+  "name": "coil-market-board",
+  "title": "Coil Market Board — scored US stocks for agents",
+  "description": "Fetch a scored, ranked US equity board: regime verdict per book, ranked candidates, and per-name opportunity / entry-quality / hold-strength scores for ~560 S&P 500, Nasdaq-100 and macro names, plus a long-only BTC/ETH trend gate. Free tier needs no key.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "dockerfile": "./Dockerfile",
+  "input": "./input_schema.json",
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "title": "Scored names",
+      "views": {
+        "overview": {
+          "title": "Overview",
+          "transformation": { "fields": ["sym", "opp", "state", "sector", "book", "asof"] },
+          "display": {
+            "component": "table",
+            "properties": {
+              "sym": { "label": "Symbol" },
+              "opp": { "label": "Opportunity" },
+              "state": { "label": "State" },
+              "sector": { "label": "Sector" },
+              "book": { "label": "Book" },
+              "asof": { "label": "As of" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

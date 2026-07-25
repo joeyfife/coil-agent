@@ -1,0 +1,37 @@
+{
+  "title": "Coil Market Board",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "book": {
+      "title": "Book",
+      "type": "string",
+      "description": "Which book to read. spx = S&P 500, qqq = Nasdaq-100, macro = bonds/income/metals/commodities, crypto = BTC + ETH trend, all = every book.",
+      "editor": "select",
+      "enum": ["all", "spx", "qqq", "macro", "crypto"],
+      "enumTitles": ["All books", "S&P 500", "Nasdaq-100", "Macro", "Crypto"],
+      "default": "all"
+    },
+    "includeRegime": {
+      "title": "Include the regime verdict",
+      "type": "boolean",
+      "description": "Add one row per book carrying the regime verdict and permission ladder. Read this FIRST — if the ladder says CASH, the ranked names are context, not a green light.",
+      "default": true,
+      "editor": "checkbox"
+    },
+    "includeRecord": {
+      "title": "Include the publisher's record",
+      "type": "boolean",
+      "description": "Add a row with the engine's own return vs SPY and QQQ (free, funding-adjusted, published with its sample size).",
+      "default": false,
+      "editor": "checkbox"
+    },
+    "licenseKey": {
+      "title": "Coil Scanner license key (optional)",
+      "type": "string",
+      "description": "Leave empty for the free board (full board, one market day delayed). A Coil Scanner key ($12/mo, coil.trade/scanner) returns the live intraday board.",
+      "editor": "textfield",
+      "isSecret": true
+    }
+  }
+}
