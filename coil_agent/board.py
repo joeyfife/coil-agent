@@ -1,10 +1,12 @@
 """Read Coil's published board.
 
-Three tiers, same schema, chosen automatically by what you have configured:
+Two tiers, same schema, chosen automatically by what you have configured:
 
   free      no key, no wallet, no account — the full board one market day delayed
   license   COIL_LICENSE_KEY — the live intraday board (recomputed ~5 min in market hours)
-  x402      COIL_X402=1 with an x402-capable client — pay per read in USDC
+
+(x402 pay-per-read exists too, but through any standard x402 client against the same
+endpoints — this harness does not carry a wallet.)
 
 The free tier is the default on purpose. A swing-timeframe agent does not need intraday
 data, and you should be able to run this repo end to end before paying anyone anything.
@@ -14,6 +16,7 @@ from __future__ import annotations
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from . import __version__
@@ -51,7 +54,15 @@ def _get(path: str, params: dict | None = None) -> dict:
                 f"{alt.get('free_delayed_board') or BASE + '/api/board/free'} "
                 f"or the MCP server {alt.get('free_mcp_server') or BASE + '/mcp'}"
             ) from None
+        if e.code in (401, 403):
+            raise BoardError(
+                "COIL_LICENSE_KEY was rejected — check the key on your account page "
+                "(https://coil.trade/scanner) or unset it to use the free tier"
+            ) from None
         raise BoardError(f"{path} failed: HTTP {e.code}") from None
+    except urllib.error.URLError as e:
+        # No network / DNS failure must be one readable line, not a 30-line traceback.
+        raise BoardError(f"cannot reach {BASE}: {getattr(e, 'reason', e)}") from None
 
 
 def preview() -> dict:
@@ -99,6 +110,12 @@ def buy_candidates(b: dict, book: str = "spx", limit: int = 5) -> list:
     regime = bk.get("regime") or {}
     ladder = regime.get("ladder") or {}
     rung = ladder.get("rung") or regime.get("ladder_rung") or bk.get("ladder_rung")
+    if rung is None:
+        # Peer review 2026-07-24: an unrecognized shape used to fall THROUGH the gate and
+        # propose buys — the exact bug class that already shipped once (the free tier's flat
+        # ladder_rung). A gate that cannot read its input is CLOSED, not open: no rung, no
+        # candidates. If a new tier adds a new shape, add it above and to the tests.
+        return []
     if rung == "CASH":
         return []
 

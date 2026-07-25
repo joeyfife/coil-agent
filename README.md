@@ -86,6 +86,8 @@ If you want those decisions made for you, that is a different product and this i
 | `COIL_MAX_POSITIONS` | `5` | Max concurrent names |
 | `COIL_MAX_POSITION_PCT` | `0.20` | Max fraction of deployable cash per name |
 | `COIL_CASH_FLOOR_PCT` | `0.20` | Fraction of equity never deployed |
+| `COIL_MIN_NOTIONAL` | `10` | Skip orders smaller than this ($) |
+| `COIL_JOURNAL` | `coil_agent_journal.jsonl` | Where the run journal is written |
 | `COIL_LICENSE_KEY` | – | Live board instead of delayed |
 | `ALPACA_API_KEY_ID` / `ALPACA_API_SECRET_KEY` | – | Paper trading (free, unfunded) |
 
@@ -96,6 +98,8 @@ Point your agent at the board directly via MCP and let it run this loop:
 ```bash
 claude mcp add --transport http coil https://coil.trade/mcp
 ```
+
+(Claude Desktop and Cursor shapes: [`examples/mcp_setup.md`](examples/mcp_setup.md).)
 
 If your agent can also *execute* — Robinhood's agentic accounts, or Alpaca — the
 [pairing recipe](https://coil.trade/agents/robinhood) documents the read order and a prompt

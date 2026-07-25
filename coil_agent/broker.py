@@ -63,8 +63,18 @@ class Alpaca:
     def __init__(self, paper: bool = True):
         self.key = os.environ.get("ALPACA_API_KEY_ID")
         self.secret = os.environ.get("ALPACA_API_SECRET_KEY")
-        # Flipping to live takes an explicit, unambiguous opt-in.
-        self.paper = paper and os.environ.get("ALPACA_LIVE_TRADING") != "I_UNDERSTAND_THE_RISK"
+        # Live requires BOTH signals (peer review 2026-07-24): the caller must pass
+        # paper=False AND the environment must carry the sentinel. Before this, either alone
+        # sufficed — Alpaca(paper=False) reached a real account with no env var at all, and a
+        # sentinel left in a shell profile silently flipped the default run to live. Passing
+        # paper=False WITHOUT the sentinel is a hard error rather than a silent downgrade,
+        # so a misconfiguration is loud instead of surprising in either direction.
+        env_live = os.environ.get("ALPACA_LIVE_TRADING") == "I_UNDERSTAND_THE_RISK"
+        if not paper and not env_live:
+            raise RuntimeError(
+                "live trading requires ALPACA_LIVE_TRADING=I_UNDERSTAND_THE_RISK in the "
+                "environment as well — refusing to guess")
+        self.paper = paper or not env_live
         self.base = PAPER_BASE if self.paper else LIVE_BASE
 
     @property

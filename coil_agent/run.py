@@ -1,7 +1,8 @@
 """The loop. Read the board top-down, propose orders, and only then touch the broker.
 
     python -m coil_agent.run              # dry run — prints the plan, sends nothing
-    python -m coil_agent.run --submit     # sends the plan to Alpaca PAPER
+    python -m coil_agent.run --submit     # sends the plan to Alpaca (PAPER unless --live AND
+                                          #   ALPACA_LIVE_TRADING=I_UNDERSTAND_THE_RISK are BOTH set)
     python -m coil_agent.run --verify     # check the archive against published commitments
 
 The read order is the whole point. Regime first: if the permission ladder says CASH, the
@@ -73,12 +74,17 @@ def main(argv: list | None = None) -> int:
         return verify_archive(argv[i + 1] if len(argv) > i + 1 and not argv[i + 1].startswith("-") else None)
 
     submit = "--submit" in argv
+    live = "--live" in argv
     cfg = Config()
     print(f"coil-agent {__version__} · book={cfg.book} · "
           f"{'SUBMIT' if submit else 'DRY RUN (nothing is sent)'}")
     show_record()
 
-    b = board.board()
+    try:
+        b = board.board()
+    except board.BoardError as e:
+        print(f"\n  {e}")
+        return 1
     print(f"\n  board asof {b.get('asof') or b.get('asof_daily')} "
           f"({'delayed' if b.get('delayed') else 'live'})")
     print(f"  regime: {board.regime_line(b, cfg.book)}")
@@ -95,8 +101,8 @@ def main(argv: list | None = None) -> int:
     for c in candidates:
         print(f"    {c.get('sym'):6s} opp={c.get('opp_pct') or c.get('opp')} state={c.get('state')}")
 
-    # 2. Broker. Only now, and only on paper unless explicitly told otherwise.
-    api = Alpaca()
+    # 2. Broker. Only now — and live only when BOTH --live and the env sentinel say so.
+    api = Alpaca(paper=not live)
     if not api.configured:
         print("\n  no Alpaca keys configured — plan only.")
         print("  set ALPACA_API_KEY_ID / ALPACA_API_SECRET_KEY for paper trading (free, no funding).")
@@ -125,15 +131,30 @@ def main(argv: list | None = None) -> int:
         journal.record({"action": "dry_run", "orders": [o.__dict__ for o in orders]})
         return 0
 
+    if not api.paper:
+        print("\n  " + "!" * 62)
+        print("  !!  LIVE TRADING — these orders will use REAL MONEY  !!")
+        print("  " + "!" * 62)
+        if sys.stdin.isatty():
+            if input("  type LIVE to continue: ").strip() != "LIVE":
+                print("  aborted.")
+                return 1
+
     for o in orders:
         try:
             r = api.submit(o)
-            print(f"    submitted {o.symbol}: {r.get('id', '?')}")
-            journal.record({"action": "submitted", "symbol": o.symbol,
-                            "notional": o.notional, "paper": api.paper, "order_id": r.get("id")})
         except Exception as e:  # one bad symbol must not kill the run
             print(f"    FAILED {o.symbol}: {e}")
             journal.record({"action": "submit_failed", "symbol": o.symbol, "error": str(e)})
+            continue
+        # The order went in. Reporting problems after this point must never be recorded as a
+        # failed SUBMIT — that would make the journal lie about a position that exists.
+        try:
+            print(f"    submitted {o.symbol}: {r.get('id', '?')}")
+            journal.record({"action": "submitted", "symbol": o.symbol,
+                            "notional": o.notional, "paper": api.paper, "order_id": r.get("id")})
+        except Exception:
+            pass
     return 0
 
 

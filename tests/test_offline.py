@@ -72,6 +72,47 @@ def test_verifier_matches_published_recipe():
     assert not check({"date": "2026-07-21", "names": {"A": [1, 2, 3]}}, d)
 
 
+def test_unknown_ladder_shape_fails_closed():
+    """Peer review: an unrecognized shape must yield NO candidates, not fall through the gate."""
+    weird = {"books": {"spx": {"regime": {"verdict": "??"}}},
+             "names": [{"sym": "AAPL", "bk": ["spx"], "opp_pct": 99}]}
+    assert buy_candidates(weird, "spx") == []
+
+
+def test_live_trading_needs_both_signals():
+    """paper=False without the env sentinel is a hard error; the sentinel alone cannot
+    override paper=True. Neither signal alone may reach a real account."""
+    import os
+    from coil_agent.broker import Alpaca, LIVE_BASE, PAPER_BASE
+    os.environ.pop("ALPACA_LIVE_TRADING", None)
+    try:
+        Alpaca(paper=False)
+        assert False, "paper=False without the sentinel must raise"
+    except RuntimeError:
+        pass
+    os.environ["ALPACA_LIVE_TRADING"] = "I_UNDERSTAND_THE_RISK"
+    try:
+        assert Alpaca(paper=True).base == PAPER_BASE, "sentinel alone must not flip paper=True"
+        assert Alpaca(paper=False).base == LIVE_BASE, "both signals together select live"
+    finally:
+        os.environ.pop("ALPACA_LIVE_TRADING", None)
+
+
+def test_bad_env_numbers_do_not_crash():
+    import os
+    os.environ["COIL_MAX_POSITIONS"] = "banana"
+    try:
+        import importlib
+        from coil_agent import config as cfgmod
+        importlib.reload(cfgmod)
+        assert cfgmod.Config().max_positions == 5
+    finally:
+        os.environ.pop("COIL_MAX_POSITIONS", None)
+        import importlib
+        from coil_agent import config as cfgmod
+        importlib.reload(cfgmod)
+
+
 def test_regime_line_never_crashes():
     assert regime_line({}, "spx")
 
