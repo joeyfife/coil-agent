@@ -1,0 +1,77 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["row_type", "asof"],
+    "properties": {
+      "row_type": {
+        "type": "string",
+        "enum": ["regime", "name", "record"],
+        "description": "regime = one per book, READ FIRST; name = one scored security; record = the publisher's own benchmark-relative return."
+      },
+      "book": {
+        "type": "string",
+        "enum": ["spx", "qqq", "macro", "crypto"],
+        "description": "Which book the row belongs to: S&P 500, Nasdaq-100, macro ETFs, or the BTC/ETH trend book."
+      },
+      "asof": { "type": "string", "description": "The publish date these scores are as of (YYYY-MM-DD)." },
+      "delayed": { "type": "boolean", "description": "True on the free tier (one market day behind); false with a Coil Scanner license." },
+
+      "regime_mode": { "type": ["string", "null"], "description": "Book-level verdict: NAMES_ON, SELECTIVE, SECTORS_ON, INDEX_ONLY or RISK_OFF." },
+      "verdict": { "type": ["string", "null"], "description": "Plain-language regime verdict for the book." },
+      "ladder_rung": { "type": ["string", "null"], "description": "Permission ladder rung. CASH means individual names are NOT enterable — the ranked names below are context, not a green light." },
+      "green_sectors": { "type": ["array", "null"], "items": { "type": "string" }, "description": "Sectors currently open beneath the index." },
+
+      "sym": { "type": ["string", "null"], "description": "Ticker." },
+      "name": { "type": ["string", "null"], "description": "Security name." },
+      "sector": { "type": ["string", "null"], "description": "Sector classification." },
+      "opp": { "type": ["number", "null"], "description": "Opportunity, 0-100. A percentile RANK across the scored universe on the publish date — not a return forecast." },
+      "entry_q": { "type": ["number", "null"], "description": "Entry quality, 0-100: buyable now versus extended. Timing only." },
+      "hold_q": { "type": ["number", "null"], "description": "Hold strength, 0-100: trend durability if a position already exists." },
+      "state": { "type": ["string", "null"], "description": "Entry lane: firing, ready, setup, wait, chase or falling. Never a buy or sell instruction." },
+      "is_leader": { "type": ["boolean", "null"], "description": "Whether the name is flagged as leadership." },
+
+      "engine_return_pct": { "type": ["number", "null"], "description": "The engine's own return since inception, funding-adjusted." },
+      "spy_return_pct": { "type": ["number", "null"], "description": "SPY buy-and-hold over the same window." },
+      "qqq_return_pct": { "type": ["number", "null"], "description": "QQQ buy-and-hold over the same window." },
+      "note": { "type": ["string", "null"], "description": "Sample-size and method note that must travel with the record." },
+      "proof": { "type": ["string", "null"], "description": "Append-only SHA-256 commitment log verifying the published scores were not changed after the fact." }
+    }
+  },
+  "views": {
+    "overview": {
+      "title": "Board",
+      "description": "Regime verdict per book, then every scored name. Read top-down.",
+      "transformation": { "fields": ["row_type", "book", "sym", "opp", "state", "sector", "ladder_rung", "verdict", "asof"] },
+      "display": {
+        "component": "table",
+        "properties": {
+          "row_type": { "label": "Type" },
+          "book": { "label": "Book" },
+          "sym": { "label": "Symbol" },
+          "opp": { "label": "Opportunity" },
+          "state": { "label": "State" },
+          "sector": { "label": "Sector" },
+          "ladder_rung": { "label": "Ladder" },
+          "verdict": { "label": "Regime verdict" },
+          "asof": { "label": "As of" }
+        }
+      }
+    },
+    "scores": {
+      "title": "Scores only",
+      "description": "Every scored name with all three scores — the shape to feed a model.",
+      "transformation": { "fields": ["book", "sym", "name", "sector", "opp", "entry_q", "hold_q", "state", "is_leader", "asof"] },
+      "display": {
+        "component": "table",
+        "properties": {
+          "book": { "label": "Book" }, "sym": { "label": "Symbol" }, "name": { "label": "Name" },
+          "sector": { "label": "Sector" }, "opp": { "label": "Opp" },
+          "entry_q": { "label": "Entry" }, "hold_q": { "label": "Hold" },
+          "state": { "label": "State" }, "is_leader": { "label": "Leader" }, "asof": { "label": "As of" }
+        }
+      }
+    }
+  }
+}
