@@ -29,7 +29,7 @@ running this strategy.
 | `includeRecord` | `false` | Emit the publisher's benchmark-relative record |
 | `licenseKey` | — | Optional [Coil Scanner](https://coil.trade/scanner) key for the live intraday board |
 
-Without a licence key you get the full board **one market day delayed** — genuinely usable for a
+The live board recomputes **about every 5 minutes while the US market is open**; the free tier is the same board **one market day delayed**. `/api/board/asof` is the exception everywhere: an immutable archive, never revised. Without a licence key you get the full board **one market day delayed** — genuinely usable for a
 swing-timeframe agent, which is what this is for.
 
 ## Reading the scores
