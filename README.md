@@ -34,7 +34,7 @@ Everything is appended to `coil_agent_journal.jsonl`, including the days it did 
 
 ## Where the data comes from
 
-[Coil](https://coil.trade) scores ~560 US names (S&P 500, Nasdaq-100, macro ETFs) plus a
+[Coil, a rules-based long-only stock scanner](https://coil.trade) scores ~560 US names (S&P 500, Nasdaq-100, macro ETFs) plus a
 long-only BTC/ETH trend book each market morning: `opp_pct` (opportunity 0–100), `entry_q`
 (buyable now vs extended), `hold_q` (trend durability), and a `state`
 (`firing` / `ready` / `setup` / `wait` / `chase` / `falling`).
@@ -102,7 +102,7 @@ claude mcp add --transport http coil https://coil.trade/mcp
 (Claude Desktop and Cursor shapes: [`examples/mcp_setup.md`](examples/mcp_setup.md).)
 
 If your agent can also *execute* — Robinhood's agentic accounts, or Alpaca — the
-[pairing recipe](https://coil.trade/agents/robinhood) documents the read order and a prompt
+[Coil-plus-Robinhood pairing recipe](https://coil.trade/agents/robinhood) documents the read order and a prompt
 that encodes it.
 
 ## Run it on Apify (no install)
